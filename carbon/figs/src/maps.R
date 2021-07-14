@@ -1,0 +1,145 @@
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(here)
+
+
+## Read spatial data -----------------------------------------------------------
+shp <- st_read(here('carbon/data/GIS/counties/')) %>%
+  mutate(COUNTYNS = as.numeric(COUNTYNS)) %>%
+  st_transform(crs = 'ESRI:102008')
+
+## State boundaries
+states <- shp %>%
+  ## Will drop slivers
+  st_buffer(100) %>%
+  group_by(STATEFP) %>%
+  summarize() %>%
+  ungroup()
+
+## CONUS boundaries
+region <- states %>%
+  summarize()
+
+## Read smoothed estimates -----------------------------------------------------
+dat <- read.csv(here('carbon/results/smoothed_estimates.csv'))
+
+
+
+
+## Map of smoothed means ------------------------------------------------
+sm.mean <- shp %>% 
+  left_join(dat, by = 'COUNTYNS') %>%
+  ggplot() +
+  ## Trick to rename NA in legend
+  geom_sf(data = shp[1,], fill = 'grey80', aes(colour = 'No data', fill = 'No data')) + 
+  
+  ## county estimates
+  geom_sf(aes(fill = pred), colour = NA, size = .1) +
+  #geom_sf(fill = NA, colour = 'grey25', alpha = .25, size = .01) +
+  
+  ## State borders
+  geom_sf(data = states, fill = NA, colour = 'grey92', size = .05) + 
+  
+  ## Region border
+  geom_sf(data = region, fill = NA, colour = 'grey25', size = .35) + 
+
+  theme_minimal() +
+  scale_fill_distiller(palette = 'Greens', direction = 1, na.value = 'grey80', 
+                       #breaks = seq(200, 1200, 200),
+                       #labels = c('200', '400', '600', '800', '1000', '1200+'),
+                       limits = c(.001, 1300)
+                       ) +
+  scale_colour_manual(values=NA) +              
+  guides(fill = guide_colourbar(expression(paste(paste(tCO[2]), paste(e%.%ha^{-1}))), order = 1, barheight = unit(2, 'in')), #guide_legend(expression(paste(tCO[2], 'e ⋅ ', ha^{-1})), order = 1), 
+         colour=guide_legend("", override.aes=list(fill = 'grey80'), order = 2)) +
+  theme(panel.grid = element_blank(),
+        axis.text = element_blank(),
+        legend.title = element_text(),
+        legend.margin = margin(-0.75,0,0,0, unit="cm"))
+sm.mean  
+
+
+
+## Map of smoothed coefficient of variation -----------------------------
+sm.cov <- shp %>% 
+  left_join(dat, by = 'COUNTYNS') %>%
+  mutate(cv = 100 * sqrt(pred.mse) / pred) %>%
+  mutate(y = case_when(pred.cv > .40 ~ .40,
+                       TRUE ~ pred.cv)) %>%
+  ggplot() +
+  ## Trick to rename NA in legend
+  geom_sf(data = shp[1,], fill = 'grey80', aes(colour = 'No data', fill = 'No data')) + 
+  
+  ## county estimates
+  geom_sf(aes(fill = y * 100), colour = NA, size = .1) +
+  #geom_sf(fill = NA, colour = 'grey25', alpha = .05, size = .01) +
+  
+  ## State borders
+  geom_sf(data = states, fill = NA, colour = 'grey92', size = .05) + 
+  
+  ## Region border
+  geom_sf(data = region, fill = NA, colour = 'grey25', size = .35) + 
+  
+  
+  theme_minimal() +
+  scale_fill_distiller(palette = 'Oranges', direction = 1, na.value = 'grey80', 
+                       breaks = c(10, 20, 30, 40),
+                       labels = c('10%', '20%', '30%', '40%+'),
+                       limits = c(0, 42)) +
+  scale_colour_manual(values=NA) +              
+  guides(fill = guide_colourbar('Coefficient\nof Variation', order = 1, barheight = unit(2, 'in')), 
+         colour=guide_legend("", override.aes=list(fill = 'grey80'), order = 2)) +
+  theme(panel.grid = element_blank(),
+        axis.text = element_blank(),
+        legend.title = element_text(),
+        legend.margin = margin(-0.75,0,0,0, unit="cm"))
+sm.cov 
+
+## Combine and save
+est <- sm.mean / sm.cov
+est
+ggsave(est, filename = here('carbon/figs/smoothed_estimates.pdf'), height = 7.25, width = 7.25)
+#ggsave(est, filename = here('carbon/figs/smoothed_estimates.png'), height = 7.25, width = 7.25)
+
+
+
+## Map of standard error ratio -------------------------------------------------
+ser <- shp %>% 
+  left_join(dat, by = 'COUNTYNS') %>%
+
+  ggplot() +
+  ## Trick to rename NA in legend
+  geom_sf(data = shp[1,], fill = 'grey80', aes(colour = 'No data', fill = 'No data')) + 
+  
+  ## county estimates
+  geom_sf(aes(fill = ser), size = .1, colour = NA) +
+  
+  ## State borders
+  geom_sf(data = states, fill = NA, colour = 'grey92', size = .05) + 
+  
+  ## Region border
+  geom_sf(data = region, fill = NA, colour = 'grey25', size = .35) + 
+
+  scale_fill_viridis_c(option = 'magma', na.value = 'grey80',
+                       direction = -1,
+                       breaks = seq(0.1, 1, .1),
+                       limits = c(.08, 1.02)) +
+  
+  theme_minimal() +
+  scale_colour_manual(values=NA) +              
+  guides(fill = guide_colourbar('Standard\nError\nRatio', order = 1, barheight = unit(2, 'in')), 
+         colour=guide_legend("", override.aes=list(fill = 'grey80'), order = 2)) +
+  theme(panel.grid = element_blank(),
+        axis.text = element_blank(),
+        legend.title = element_text(),
+        legend.margin = margin(-0.75,0,0,0, unit="cm"))
+ser 
+
+ggsave(ser, filename=here('carbon/figs/error_ratio.pdf'), width = 7.25, height = 7.25/2)
+#ggsave(ser, filename=here('carbon/figs/error_ratio.png'), width = 7.25, height = 7.25/2)
+
+
+
+
