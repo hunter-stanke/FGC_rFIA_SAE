@@ -9,4 +9,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Simplifying small area estimation with rFIA: a demonstration of tools and techniques
 
+This is a permanent repository for code used in 
+
 ## Detailed tutorials coming soon!
+
+For questions and/or more details, contact [Hunter Stanke](https://hunter-stanke.com/) at stankehu@msu.edu and/or (269) 221-4745.

@@ -6,6 +6,10 @@
 ## the public FIA Datamart on 1 December 2020 using
 ## the rFIA R package. 
 ##
+## **NOTE**: Only run this script ONCE, i.e., for initial 
+##           download of FIA data. All data will be 
+##           stored in the `vol/FIA/data/` directory.
+##
 ## Last modified: 1 December 2020 - Hunter Stanke
 ##
 ##====================================================

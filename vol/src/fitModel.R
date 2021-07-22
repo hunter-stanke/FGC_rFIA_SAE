@@ -1,3 +1,19 @@
+##=====================================================
+##=====================================================
+##
+## This script fits a Bayesian mixed-effects model to 
+## plot-level summaries of merchantable wood volume 
+## density (volume / acre) (produced in`pltSummaries.R`), 
+## yielding a temporally explicit model of the state 
+## variable in Maine. Resulting estimates are derived 
+## summaries of MCMC samples, saved as`predicted_totals.csv`, 
+## and stored in the `vol/results/` directory.
+##
+## Last modified: 22 July 2021 - Hunter Stanke
+##
+##====================================================
+##====================================================
+
 
 ## Load packages/ set working directory ----------------------------------------
 library(dplyr)

@@ -1,4 +1,29 @@
-
+##=====================================================
+##=====================================================
+##
+## This script computes direct estimates of county-level
+## forest carbon stocks using FIA's traditional, 
+## post-stratified estimators. Note that we use a spatial
+## dataset to delineate counties, as opposed to 
+## specifying `grpBy = COUNTYCD` in the call to `carbon`.
+## Both approaches will yield the same results, but we
+## take the spatial approach here to improve the 
+## generality of this code for adaptation by subsequent
+## users.
+##
+## For reference, this script will load FIA data 
+## previously downloaded by running the script `getFIA.R`.
+## Hence, `getFIA.R` must be run first. Results will be
+## saved in the `carbon/results/` directory, labeled as
+## `direct_estimates.csv`. These direct estimates will 
+## then be used to fit a Fay-Herriot model (implemented in
+## `fitModel.R`). Note that `getPRISM.R` must also be 
+## run before `fitModel.R`.
+##
+## Last modified: 22 July 2021 - Hunter Stanke
+##
+##====================================================
+##====================================================
 
 ## Load packages/ set working directory ----------------------------------------
 library(rFIA)
@@ -22,7 +47,7 @@ allStates <- c('AL', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'ID',
                'WI', 'WY')
 
 # Set up database
-db <- readFIA(dir = '/home/hunter/FIA', #dir = here('carbon/data/FIA'),
+db <- readFIA(dir = here('carbon/data/FIA'),
               states = allStates,
               inMemory = FALSE,
               nCores = cores)

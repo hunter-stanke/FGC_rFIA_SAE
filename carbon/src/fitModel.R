@@ -1,4 +1,18 @@
-
+##=====================================================
+##=====================================================
+##
+## This script fits a spatial Fay-Herriot model to 
+## direct estimates of forest carbon stocks (produced in
+## `directEstimates.R`), using long-term climate normals
+## as predictors (downloaded from the PRISM dataset in 
+## `getPRISM.R`). Resulting smoothed estimates (EBPLUP)
+## will be saved as `smoothed_estimates.csv`, and stored
+## in the `carbon/results/` directory.
+##
+## Last modified: 22 July 2021 - Hunter Stanke
+##
+##====================================================
+##====================================================
 
 ## Load packages/ set working directory ----------------------------------------
 library(sae)

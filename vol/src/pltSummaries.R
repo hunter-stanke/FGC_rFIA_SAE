@@ -1,3 +1,27 @@
+##=====================================================
+##=====================================================
+##
+## This script (1) computes plot-level summaries of 
+## merchantable wood volume for all plot visits recorded
+## by FIA in Maine, and (2) extracts survey design 
+## information related to the most recent "current
+## volume" inventory in the state (e.g., strata weights,
+## plot assignments to stratum, etc).
+##
+## For reference, this script will load FIA data 
+## previously downloaded by running the script `getFIA.R`.
+## Hence, `getFIA.R` must be run first. Results will be
+## saved in the `volume/results/` directory, labeled as
+## `plt_summaries.csv`. These plot-level estimates will 
+## then be used to fit the Bayesian mixed-effects model
+## (implemented in `fitModel.R`). 
+
+
+## Last modified: 22 July 2021 - Hunter Stanke
+##
+##====================================================
+##====================================================
+
 
 ## Load packages/ set working directory ----------------------------------------
 library(rFIA)
@@ -6,7 +30,7 @@ library(here)
 
 
 ## Set up a remote database ----------------------------------------------------
-db <- readFIA(dir = '/home/hunter/FIA/', #dir = here('vol/data/FIA'), 
+db <- readFIA(dir = here('vol/data/FIA'), 
               states = c('ME'),
               inMemory = FALSE)
 
