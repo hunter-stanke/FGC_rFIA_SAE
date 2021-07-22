@@ -1,0 +1,12 @@
+---
+output: github_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Simplifying small area estimation with rFIA: a demonstration of tools and techniques
+
+## Detailed tutorials coming soon!

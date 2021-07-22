@@ -68,8 +68,8 @@ plt <- preds %>%
   #     subtitle = 'Washington Survey Unit, Maine')
 plt
 
-#ggsave(plt, filename = here('vol/figs/me_volume_trends.pdf'), height = 7.25, width = 7.25)
-ggsave(plt, filename = here('vol/figs/me_volume_trends.png'), height = 7.25, width = 7.25)
+ggsave(plt, filename = here('vol/figs/me_volume_trends.pdf'), height = 7.25, width = 7.25)
+ggsave(plt, filename = here('vol/figs/figure4.jpg'), height = 7.25, width = 7.25)
 
 
 
@@ -101,5 +101,5 @@ cv <- preds %>%
         legend.box.margin = margin(-25))
 cv
 
-#ggsave(cv, filename = here('vol/figs/me_volume_cv.pdf'), height = 3, width = 3.5)
-ggsave(cv, filename = here('vol/figs/me_volume_cv.png'), height = 3, width = 3.5)
+ggsave(cv, filename = here('vol/figs/me_volume_cv.pdf'), height = 3, width = 3.5)
+ggsave(cv, filename = here('vol/figs/figure5.jpg'), height = 3, width = 3.5)

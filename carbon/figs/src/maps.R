@@ -101,7 +101,7 @@ sm.cov
 est <- sm.mean / sm.cov
 est
 ggsave(est, filename = here('carbon/figs/smoothed_estimates.pdf'), height = 7.25, width = 7.25)
-#ggsave(est, filename = here('carbon/figs/smoothed_estimates.png'), height = 7.25, width = 7.25)
+ggsave(est, filename = here('carbon/figs/figure1.jpg'), height = 7.25, width = 7.25)
 
 
 
@@ -138,7 +138,7 @@ ser <- shp %>%
 ser 
 
 ggsave(ser, filename=here('carbon/figs/error_ratio.pdf'), width = 7.25, height = 7.25/2)
-#ggsave(ser, filename=here('carbon/figs/error_ratio.png'), width = 7.25, height = 7.25/2)
+ggsave(ser, filename=here('carbon/figs/figure2.jpg'), width = 7.25, height = 7.25/2)
 
 
 

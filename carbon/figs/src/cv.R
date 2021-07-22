@@ -37,4 +37,4 @@ plt <- sm %>%
 plt
 
 ggsave(plt, filename = here('carbon/figs/carbon_cv.pdf'), height = 3, width = 3.5)
-#ggsave(plt, filename = here('carbon/figs/carbon_cv.png'), height = 3, width = 3.5)
+ggsave(plt, filename = here('carbon/figs/figure3.jpg'), height = 3, width = 3.5)
