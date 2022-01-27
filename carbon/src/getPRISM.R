@@ -24,63 +24,69 @@ library(here)
 
 
 ##  Download PRISM data ---------------------------------------------------------
-# Where to store it?
-options(prism.path = here('carbon/data/PRISM/'))
+# Where should we save it?
+options(prism.path = here::here('carbon/data/PRISM/'))
 
 # Mean ppt -- 30-year normals
-get_prism_normals(type = "ppt", resolution = '800m', annual = TRUE, keepZip = FALSE)
+prism::get_prism_normals(type = "ppt", 
+                         resolution = '800m',
+                         annual = TRUE, 
+                         keepZip = FALSE)
 
 # Mean temp -- 30-year normals
-get_prism_normals(type = "tmean", resolution = '800m', annual = TRUE, keepZip = FALSE)
+prism::get_prism_normals(type = "tmean", 
+                         resolution = '800m', 
+                         annual = TRUE, 
+                         keepZip = FALSE)
 
 
 
 ## Load PRISM data -------------------------------------------------------------
 # Precip normals
-ppt <- read_stars(here('carbon/data/PRISM/PRISM_ppt_30yr_normal_800mM2_annual_bil/PRISM_ppt_30yr_normal_800mM2_annual_bil.bil'))
+ppt <- stars::read_stars(here::here('carbon/data/PRISM/PRISM_ppt_30yr_normal_800mM3_annual_bil/PRISM_ppt_30yr_normal_800mM3_annual_bil.bil'))
 
 # Tmean normals
-tmean <- read_stars(here('carbon/data/PRISM/PRISM_tmean_30yr_normal_800mM2_annual_bil/PRISM_tmean_30yr_normal_800mM2_annual_bil.bil'))
+tmean <- stars::read_stars(here::here('carbon/data/PRISM/PRISM_tmean_30yr_normal_800mM3_annual_bil/PRISM_tmean_30yr_normal_800mM3_annual_bil.bil'))
 
 
 
+## Download shapefile of county boundaries from TIGRIS dataset -----------------
+counties <- tigris::counties(state = lower48) %>%
+  # Re-project to match climate data
+  sf::st_transform(crs = sf::st_crs(ppt))
 
-## Aggregate into means within counties ----------------------------------------
-# County shapefile
-counties <- st_read(here('carbon/data/GIS/counties/')) %>%
-  st_transform(crs = st_crs(ppt))
 
+## Aggregate climate raster data into county-level averages --------------------
+# In our spatial county dataset, each row represents a unique county. Hence, 
+# we can iterate ("loop") over rows in the county dataset, extract the 
+# climate data that overlaps with the county, and summarize the climate data
+# into a series of descriptive statistics (mean, sd, etc). Here we will only 
+# save the mean of average annual temperature and precipitation. 
 
-## A function to aggregate climate variables within spatial units
-agg.clim <- function(X, ppt, tmean, polys) {
+# We'll save our summaries in these vectors, "growing" them as we iterate
+county.temp <- c()
+county.ppt <- c()
+for (i in 1:nrow(counties)) {
   
-  ## Pull out individual spatial unit
-  shp <- polys[X,]
+  ## Crop our climate rasters down to the county boundary
+  tmean.crop <- sf::st_crop(tmean, counties[i,])
+  ppt.crop <- sf::st_crop(ppt, counties[i,])
   
-  ## Crop rasters to extent of spatial unit
-  suppressMessages({
-    ppt.crop <- st_crop(ppt, shp)
-    tmean.crop <- st_crop(tmean, shp)
-  })
-
-  ## Take the mean of each variable and store in data.frame
-  out <- data.frame(COUNTYNS = shp$COUNTYNS, 
-                    ppt = mean(ppt.crop$PRISM_ppt_30yr_normal_800mM2_annual_bil.bil, na.rm = TRUE),
-                    tmean = mean(tmean.crop$PRISM_tmean_30yr_normal_800mM2_annual_bil.bil, na.rm = TRUE))
+  ## Save mean temp and ppt
+  county.temp <- c(county.temp, mean(tmean.crop[[1]], na.rm = TRUE))
+  county.ppt <- c(county.ppt, mean(ppt.crop[[1]], na.rm = TRUE))
   
-  return(out)
 }
 
-
-## Do the aggregation 
-out <- lapply(X = 1:nrow(counties), FUN = agg.clim, 
-                ppt, tmean, counties)
-
-## Back to dataframe
-clim <- bind_rows(out)
+## Now we add our climate summaries to our spatial county dataset --------------
+counties$mat <- county.temp # Mean annual temperature
+counties$map <- county.ppt # Mean annual precipitation
 
 
+## Simplify structure of spatial data and save ---------------------------------
+counties <- counties %>%
+  dplyr::select(STATEFP, COUNTYFP, NAME, mat, map)
+sf::write_sf(counties, here::here('carbon/data/counties_climate/counties_climate.shp'))
 
-## Save ecoregion shapefile with aggregated climate variables ------------------
-write.csv(clim, here('carbon/results/climate_county.csv'), row.names = FALSE)
+
 

@@ -83,7 +83,7 @@ cv <- preds %>%
   geom_point(size = 1.5, alpha = .9) +
   theme_bw() +
   scale_colour_brewer(palette = 'Dark2') +
-  ylab('Coefficient of Variation (%)') +
+  ylab('Relative Standard Error (%)') +
   xlab('') +
   
   #annotate('label', x = 2002, y = 157.4, label = 'Post-stratified\nannual estimator', colour = 'grey10') +

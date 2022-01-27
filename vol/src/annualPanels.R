@@ -27,22 +27,20 @@ library(here)
 
 
 ## Set up a remote database ----------------------------------------------------
-db <- readFIA(dir = here('vol/data/FIA'), 
-              states = c('ME'),
-              inMemory = FALSE)
+db <- rFIA::readFIA(dir = here::here('vol/data/FIA'), 
+                    states = c('ME'))
 
 
 
 ## Annual estimator of total merchantable volume -------------------------------
 ## Washington survey unit, ME
-bio <- volume(db,
-               landType = 'timber',
-               areaDomain = UNITCD == 1,
-               method = 'annual',
-               totals = TRUE,
-               variance = TRUE,
-               nCores = 10)
+ps.totals <- rFIA::volume(db,
+                          landType = 'timber',
+                          areaDomain = UNITCD == 1,
+                          method = 'annual',
+                          totals = TRUE,
+                          variance = TRUE)
 
 ## Save results ----------------------------------------------------------------
-write.csv(bio, here('vol/results/annual_panels.csv'), row.names = FALSE)
+write.csv(ps.totals, here('vol/results/annual_panels.csv'), row.names = FALSE)
 

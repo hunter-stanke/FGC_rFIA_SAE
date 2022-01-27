@@ -33,50 +33,50 @@ library(sf)
 
 # Number of physical cores to use 
 # Check what you have w/ parallel::detectCores(logical=FALSE)
-cores = 10
+cores = 1
 
 
 
 
 ## Set up "remote" FIA Database ------------------------------------------------
 # Vector of states
-allStates <- c('AL', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'ID',
-               'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS',
-               'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK',
-               'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
-               'WI', 'WY')
+lower48 <- c('AL', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'ID', 'IL', 
+             'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS',
+             'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 
+             'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 
+             'WA', 'WV', 'WI', 'WY')
 
 # Set up database
-db <- readFIA(dir = here('carbon/data/FIA'),
-              states = allStates,
-              inMemory = FALSE,
-              nCores = cores)
+db <- rFIA::readFIA(dir = here::here('carbon/data/FIA'),
+                    states = lower48,
+                    inMemory = FALSE,
+                    nCores = cores)
 
 # A most recent subset
-db <- clipFIA(db)
+db <- rFIA::clipFIA(db)
 
 
 
 
 ## Read spatial data -----------------------------------------------------------
-counties <- st_read(here('carbon/data/GIS/counties/')) 
+counties <- sf::st_read(here::here('carbon/data/counties_climate/')) 
 
 
 
 
 ## Estimate carbon density by county -------------------------------------------
-pop.est <- carbon(db, 
-                  polys = counties,
-                  totals = TRUE,
-                  variance = TRUE,
-                  byPool = FALSE, # Sum up all pools, total forest carbon
-                  nCores = cores)
-  
-  
-  
+pop.est <- rFIA::carbon(db, 
+                        polys = counties,
+                        totals = TRUE,
+                        variance = TRUE,
+                        byPool = FALSE, # Sum up all pools, total forest carbon
+                        nCores = cores)
+
+
+
 
 ## Save results ----------------------------------------------------------------
 write.csv(pop.est, 
-          here('carbon/results/direct_estimates.csv'), 
+          here::here('carbon/results/direct_estimates.csv'), 
           row.names = FALSE)
-  
+

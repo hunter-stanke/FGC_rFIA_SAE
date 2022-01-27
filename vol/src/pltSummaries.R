@@ -26,13 +26,12 @@
 ## Load packages/ set working directory ----------------------------------------
 library(rFIA)
 library(dplyr)
+library(tidyr)
 library(here)
 
 
 ## Set up a remote database ----------------------------------------------------
-db <- readFIA(dir = here('vol/data/FIA'), 
-              states = c('ME'),
-              inMemory = FALSE)
+db <- rFIA::readFIA(dir = here::here('vol/data/FIA'))
 
 
 
@@ -40,34 +39,52 @@ db <- readFIA(dir = here('vol/data/FIA'),
 
 ## Extract stratum and estimation units weights for the most recent 
 ## current volume inventory in each state
-wgts <- getDesignInfo(db, type = 'VOL', mostRecent = TRUE)
+wgts <- rFIA::getDesignInfo(db, type = 'VOL', mostRecent = TRUE)
+
+## Generate list of all visits to plots included in the most recent
+## current volume inventory, including non-forested plots
+plt.visits <- db$PLOT %>%
+  # Replicate the unique plot ID (`pltID`) from rFIA
+  dplyr::mutate(pltID = paste(UNITCD, STATECD, COUNTYCD, PLOT, sep = '_')) %>%
+  # Select plots from inventory of interest
+  dplyr::filter(pltID %in% wgts$pltID) %>%
+  # Drop any visits pre-1999
+  dplyr::filter(MEASYEAR >= 1999) %>%
+  # Only retain ID columns
+  dplyr::select(pltID, YEAR = MEASYEAR)
+
+mod.dat <- wgts %>%
+  ## Drop YEAR from design info, as it represents reporting years, 
+  # as opposed to measurement years of plots
+  dplyr::select(-YEAR) %>%
+  dplyr::left_join(plt.visits, by = 'pltID')
 
 ## Summarize merchantable volume to the plot level for all plots in the
 ## Washington survey unit
-bio <- volume(db,
-              byPlot = TRUE,
-              areaDomain = UNITCD == 1,
-              landType = 'timber',
-              nCores = 10)
+plt.vol <- rFIA::volume(db,
+                        byPlot = TRUE,
+                        areaDomain = UNITCD == 1,
+                        landType = 'timber')
 
-## Join design info and plot-level time-series
-dat <- wgts %>%
-  ## Drop inventory year, YEAR will indicate plot measurement year now
-  ## PLT_CN only helps us identify the plot visits that are included in 
-  ## the most recent volume inventory, we want a time-series instead, 
-  ## so we use the permanent plot identifier `pltID`
-  select(-c(YEAR, PLT_CN)) %>%
-  left_join(select(bio, pltID, PLT_CN, YEAR, BOLE_CF_ACRE), by = c('pltID')) %>%
-  ## We're safe to drop estimation units where no non-zero values of the 
-  ## response variables are ever observed
-  group_by(ESTN_UNIT_CN) %>%
-  mutate(nonzero = sum(BOLE_CF_ACRE, na.rm = TRUE)) %>%
-  ungroup() %>%
-  filter(nonzero > 0) %>%
-  select(STATECD, ESTN_UNIT_CN, AREA_USED, STRATUM_CN, 
-         STRATUM_WGT, pltID, YEAR, BOLE_CF_ACRE)
+
+mod.dat <- mod.dat %>%
+  ## Join response variable onto plot-visit dataset
+  dplyr::left_join(dplyr::select(plt.vol, pltID, PLT_CN, BOLE_CF_ACRE), 
+                   by = c('pltID', 'PLT_CN')) %>%
+  # Replace any NA's (indicating non-forested plots) with 0s
+  tidyr::replace_na(list(BOLE_CF_ACRE = 0)) %>%
+  # We're safe to drop estimation units where no non-zero values of the 
+  # response variables are ever observed
+  dplyr::group_by(ESTN_UNIT_CN) %>%
+  dplyr::mutate(nonzero = sum(BOLE_CF_ACRE, na.rm = TRUE)) %>%
+  dplyr::ungroup() %>%
+  dplyr::filter(nonzero > 0) %>%
+  dplyr::select(STATECD, ESTN_UNIT_CN, AREA_USED, STRATUM_CN, 
+                STRATUM_WGT, pltID, YEAR, BOLE_CF_ACRE)
 
 
 ## Save results ----------------------------------------------------------------
-write.csv(dat, here('vol/results/plt_summaries.csv'), row.names = FALSE)
+write.csv(mod.dat, 
+          here::here('vol/results/plt_summaries.csv'),
+          row.names = FALSE)
 

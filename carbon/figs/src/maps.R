@@ -6,7 +6,7 @@ library(here)
 
 
 ## Read spatial data -----------------------------------------------------------
-shp <- st_read(here('carbon/data/GIS/counties/')) %>%
+shp <- st_read(here('carbon/figs/counties/')) %>%
   mutate(COUNTYNS = as.numeric(COUNTYNS)) %>%
   st_transform(crs = 'ESRI:102008')
 
@@ -89,7 +89,7 @@ sm.cov <- shp %>%
                        labels = c('10%', '20%', '30%', '40%+'),
                        limits = c(0, 42)) +
   scale_colour_manual(values=NA) +              
-  guides(fill = guide_colourbar('Coefficient\nof Variation', order = 1, barheight = unit(2, 'in')), 
+  guides(fill = guide_colourbar('Relative\nStandard Error', order = 1, barheight = unit(2, 'in')), 
          colour=guide_legend("", override.aes=list(fill = 'grey80'), order = 2)) +
   theme(panel.grid = element_blank(),
         axis.text = element_blank(),
@@ -101,7 +101,7 @@ sm.cov
 est <- sm.mean / sm.cov
 est
 ggsave(est, filename = here('carbon/figs/smoothed_estimates.pdf'), height = 7.25, width = 7.25)
-ggsave(est, filename = here('carbon/figs/figure1.jpg'), height = 7.25, width = 7.25)
+ggsave(est, filename = here('carbon/figs/figure1.jpg'), height = 7.25, width = 7.25, bg="white")
 
 
 
@@ -138,7 +138,7 @@ ser <- shp %>%
 ser 
 
 ggsave(ser, filename=here('carbon/figs/error_ratio.pdf'), width = 7.25, height = 7.25/2)
-ggsave(ser, filename=here('carbon/figs/figure2.jpg'), width = 7.25, height = 7.25/2)
+ggsave(ser, filename=here('carbon/figs/figure2.jpg'), width = 7.25, height = 7.25/2, bg="white")
 
 
 

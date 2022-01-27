@@ -23,39 +23,30 @@ library(here)
 
 
 ## Read spatial data -----------------------------------------------------------
-counties <- st_read(here('carbon/data/GIS/counties')) %>%
-  st_transform(crs = 'ESRI:102008') %>%
-  ## Compute area of each, sq m --> ha
-  mutate(ha = as.numeric(st_area(.) / 10000)) %>%
-  mutate(COUNTYNS = as.numeric(COUNTYNS))
+counties <- sf::st_read(here::here('carbon/data/counties_climate/')) %>%
+  sf::st_transform(crs = 'ESRI:102008') %>%
+  ## Compute area of each county, sq m --> ha
+  dplyr::mutate(ha = as.numeric(sf::st_area(.) / 10000)) %>%
+  dplyr::mutate(STATEFP = as.numeric(STATEFP),
+                COUNTYFP = as.numeric(COUNTYFP)) %>%
+  # Take log of mean annual precipitation
+  dplyr::mutate(map = log(map)) %>%
+  # Center and scale ppt and tmean
+  dplyr::mutate(mat = scale(mat, na.rm = TRUE),
+                map = scale(map, na.rm = TRUE))
 
 
 
 ## Read direct estimates -------------------------------------------------------
-pop.est <- read.csv(here('carbon/results/direct_estimates.csv')) %>%
-  # Slim it down
-  dplyr::select(COUNTYNS, CARB_TOTAL, CARB_TOTAL_VAR, nPlots_TREE, N) %>%
+pop.est <- read.csv(here::here('carbon/results/direct_estimates.csv')) %>%
   # Convert population totals to population means by dividing by area of units
-  left_join(dplyr::select(as.data.frame(counties), COUNTYNS, ha), by = 'COUNTYNS') %>%
+  dplyr::left_join(as.data.frame(counties), by = c('STATEFP', 'COUNTYFP')) %>%
   ## Results is mean C02e (tons) of forest carbon across all lands
   mutate(carb = CARB_TOTAL / ha / (12/44),
          carb.var = CARB_TOTAL_VAR / (ha^2) / ((12/44)^2)) %>%
-  ## Compute coefficient of variation of post-stratified estimates
-  mutate(carb.cv = sqrt(carb.var) / carb)
-
-
-## Read climate data -----------------------------------------------------------
-pop.est <- pop.est %>%
-  left_join(read.csv(here('carbon/results/climate_county.csv')),
-            by = 'COUNTYNS') %>%
-  # An interaction term for precip and tmean
-  mutate(ppt.x.tmean = ppt * tmean) %>%
-  # Scale our predictors
-  mutate(ppt = log(ppt)) %>%
-  # Center and scale ppt and tmean, but only scale 
-  # their interaction (reduce correlation among predictors)
-  mutate(across(ppt:tmean, .fns = function(x) {(x - mean(x, na.rm = TRUE)) / sd(x, na.rm = TRUE)}),
-         ppt.x.tmean = ppt.x.tmean / sd(ppt.x.tmean, na.rm = TRUE))
+  ## Compute relative standard error of post-stratified estimates
+  mutate(carb.rse = sqrt(carb.var) / carb)
+  
 
 
 
@@ -101,15 +92,15 @@ mod <- mseSFH(carb ~ design.mat,
 # Appending EBLUP estimates to dataframe w/ post-stratified estimates
 pop.est$pred <- mod$est$eblup
 pop.est$pred.mse <- mod$mse
-pop.est$pred.cv <- sqrt(pop.est$pred.mse) / pop.est$pred
+pop.est$pred.rse <- sqrt(pop.est$pred.mse) / pop.est$pred
 
 # Ratio of smoothed RMSE to post-stratified SE
 pop.est$ser <- sqrt(pop.est$pred.mse) / sqrt(pop.est$carb.var)
 
 # Save to file
 write.csv(dplyr::select(pop.est, COUNTYNS,
-                        carb, carb.var, carb.cv, 
-                        pred, pred.mse, pred.cv,
-                        ser, cvr),
+                        carb, carb.var, carb.rse, 
+                        pred, pred.mse, pred.rse,
+                        ser),
           here('carbon/results/smoothed_estimates.csv'),
           row.names = FALSE)

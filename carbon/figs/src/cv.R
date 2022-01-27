@@ -22,8 +22,8 @@ plt <- sm %>%
   geom_point(alpha = .1, size = 0.9) +
   theme_bw() +
   scale_colour_brewer(palette = 'Dark2') +
-  xlab('Counties (ordered smallest to largest CV Direct)') +
-  ylab('Coefficient of Variation (%)') +
+  xlab('Counties (ordered smallest to largest RSE Direct)') +
+  ylab('Relative Standard Error (%)') +
   guides(colour = guide_legend(override.aes = c(alpha = 1, size = 2))) +
   scale_y_continuous(breaks = seq(0, 110, 10)) +
   theme(axis.text.x = element_blank(),
